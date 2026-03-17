@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AMHR-PD Control Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="animated-bg">
+    <div class="grid-overlay"></div>
+    <div class="glow-orb glow-1"></div>
+    <div class="glow-orb glow-2"></div>
+    <div class="glow-orb glow-3"></div>
+  </div>
+
+  <div class="dashboard-container">
+    <header class="dashboard-header">
+      <div class="logo-section">
+        <div class="logo-icon">🤖</div>
+        <div class="logo-text">
+          <h1>AMHR-PD</h1>
+          <span class="subtitle">Humanoid Robot Control Center</span>
+        </div>
+      </div>
+
+      <div class="system-status">
+        <div class="status-item">
+          <span class="status-label">System</span>
+          <span class="status-value online">
+            <span class="dot" id="status-dot"></span>
+            <span id="status-text">Connecting...</span>
+          </span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Devices</span>
+          <span class="status-value" id="device-count">0</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Time</span>
+          <span class="status-value" id="current-time">--:--:--</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <!-- DEVICE STATUS -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2><span class="icon">📡</span> Devices</h2>
+          <button class="btn-icon" onclick="pollDeviceStatus()" title="Refresh">⟳</button>
+        </div>
+        <div class="panel-content">
+          <div class="device-grid" id="device-status"></div>
+        </div>
+      </section>
+
+
+      <!-- SERVO CONTROLS -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2><span class="icon">🎯</span> Servo / Pose</h2>
+        </div>
+        <div class="panel-content">
+          <div class="buttons">
+            <button onclick="sendPose('reset')">Reset Position</button>
+            <button onclick="sendPose('handsup')">Hands Up</button>
+            <button onclick="sendPose('headup')">Head Up</button>
+            <button onclick="sendPose('headleft')">Head Left</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOVEMENT CONTROLS -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2><span class="icon">🛞</span> Movement</h2>
+        </div>
+        <div class="panel-content">
+          <div class="movement-pad">
+            <div></div>
+            <button onclick="sendMovement('forward')" class="move-btn">Forward</button>
+            <div></div>
+            <button onclick="sendMovement('left')" class="move-btn">Left</button>
+            <button onclick="sendMovement('stop')" class="stop-btn">STOP</button>
+            <button onclick="sendMovement('right')" class="move-btn">Right</button>
+            <div></div>
+            <button onclick="sendMovement('backward')" class="move-btn">Back</button>
+            <div></div>
+          </div>
+          <div class="speed-control">
+            <label>Speed: <input type="range" id="speed-slider" min="50" max="255" value="200"></label>
+            <span id="speed-value">200</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- AUDIO / CAMERA CONTROLS -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2><span class="icon">📷</span> Audio / Camera</h2>
+        </div>
+        <div class="panel-content">
+          <div class="buttons">
+            <button onclick="startManualRecording()" class="record-btn">Record Voice</button>
+            <button onclick="sendCameraCmd('capture')">Capture</button>
+            <button onclick="sendCameraCmd('start_stream')">Start Stream</button>
+            <button onclick="sendCameraCmd('stop_stream')">Stop Stream</button>
+            <button onclick="sendCameraCmd('flash_toggle')">Toggle Flash</button>
+            <button onclick="sendCameraCmd('beep')">Beep</button>
+          </div>
+          <div id="camera-preview" class="camera-preview">
+            <p class="hint">Camera stream will appear here when available</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SERVO STATE -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2><span class="icon">📊</span> Servo State</h2>
+          <button class="btn-icon" onclick="fetchAllServoStates()" title="Refresh">⟳</button>
+        </div>
+        <div class="panel-content">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Channel</th>
+                <th>Current Angle</th>
+                <th>Target Angle</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="servo-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <h2><span class="icon">🎙️</span> Voice Activity</h2>
+          <button class="btn-icon" onclick="fetchAudioLogs()" title="Refresh">⟳</button>
+        </div>
+        <div class="panel-content">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Device</th>
+                <th>Level</th>
+                <th>Threshold</th>
+                <th>Text</th>
+                <th>Prefix</th>
+                <th>Command</th>
+                <th>Manual</th>
+              </tr>
+            </thead>
+            <tbody id="audio-log-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <h2><span class="icon">📝</span> User Requests</h2>
+          <button class="btn-icon" onclick="fetchUserRequests()" title="Refresh">⟳</button>
+        </div>
+        <div class="panel-content">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Device</th>
+                <th>Text</th>
+                <th>Command</th>
+                <th>Confidence</th>
+                <th>Manual</th>
+              </tr>
+            </thead>
+            <tbody id="user-request-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <h2><span class="icon">🧾</span> System Logs</h2>
+          <button class="btn-icon" onclick="fetchSystemLogs()" title="Refresh">⟳</button>
+        </div>
+        <div class="panel-content">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Level</th>
+                <th>Source</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody id="system-log-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <h2><span class="icon">🧠</span> Command Logs</h2>
+          <button class="btn-icon" onclick="fetchCommandLogs()" title="Refresh">⟳</button>
+        </div>
+        <div class="panel-content">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Device Type</th>
+                <th>Command</th>
+                <th>Status</th>
+                <th>Targets</th>
+                <th>Success</th>
+              </tr>
+            </thead>
+            <tbody id="command-log-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <h2><span class="icon">🔌</span> Connection Events</h2>
+          <div class="panel-actions">
+            <select id="connection-device-select" class="select"></select>
+            <button class="btn-icon" onclick="fetchConnectionEvents()" title="Refresh">⟳</button>
+          </div>
+        </div>
+        <div class="panel-content">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Event</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="connection-event-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      AMHR-PD 2026 | Robot Control System
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
